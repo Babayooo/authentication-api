@@ -13,9 +13,10 @@ app = Flask(__name__)
 app.config ["MAIL_SERVER"]= "smtp.gmail.com"
 app.config["MAIL_PORT"]= 465
 app.config["MAIL_USERNAME"]= "martinmarto051@gmail.com"
-app.config["MAIL_PASSWORD"]= "user the email above to contact me for gigs"
+app.config["MAIL_PASSWORD"]= "use the above email to contact me for gigs"
 app.config["MAIL_USE_TLS"]= False
 app.config["MAIL_USE_SSL"]= True
+app.config["MAIL_DEFAULT_SENDER"]= app.config["MAIL_USERNAME"]
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///authentication.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]= False
 app.config["SQLALCHEMY_ECHO"]= True
@@ -63,10 +64,10 @@ def register_user():
         db.session.commit()
     
         token = s.dumps(email, salt="random number")
-        verification_link = url_for("verify_email", Token=token, _external=True)
+        url = url_for("register_user", token=token, _external=True)
         
-        msg= Message("confirm your email", sender = app.config["EMAIL_USERNAME"], recipients=[new_user.email])
-        msg.body = f"click the link to verify youe email: {verification_link}"
+        msg= Message("confirm your email", sender = app.config["MAIL_DEFAULT_SENDER"], recipients=[new_user.email])
+        msg.body = f"click the link to verify youe email: {url}"
         mail.send(msg)
 
         return jsonify({"message":"user created successfully"}), 201
@@ -74,7 +75,7 @@ def register_user():
         db.session.rollback()
         return jsonify({"error":str(e)}), 500
 
-@app.route("/auth/verify_email/<token>", methods=["GET"])
+@app.route("/auth/Register/<token>", methods=["GET"])
 def email_verification(token):
     try:
         email= s.loads(token, salt="random number", max_age=3600)
